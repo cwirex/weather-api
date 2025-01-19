@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Weather API"
 
+    # Admin Settings
+    ADMIN_API_KEY: str = "admin-sk"
+
     # OpenWeatherMap Settings
     OPENWEATHER_API_KEY: str
     OPENWEATHER_BASE_URL: str = "https://api.openweathermap.org/data/3.0"

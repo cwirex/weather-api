@@ -1,97 +1,151 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Literal
 
-# Sample cities data
-SAMPLE_CITIES = {
-    "london": {
+# Comprehensive city data
+CITIES = {
+    "london,gb": {
         "name": "London",
         "country": "GB",
-        "coordinates": {"lat": 51.5074, "lon": -0.1278}
+        "state": "England",
+        "lat": 51.5074,
+        "lon": -0.1278,
+        "tz": "+00:00"
     },
-    "paris": {
+    "paris,fr": {
         "name": "Paris",
         "country": "FR",
-        "coordinates": {"lat": 48.8566, "lon": 2.3522}
+        "state": "Île-de-France",
+        "lat": 48.8566,
+        "lon": 2.3522,
+        "tz": "+01:00"
     },
-    "new york": {
+    "new york,us": {
         "name": "New York",
         "country": "US",
-        "coordinates": {"lat": 40.7128, "lon": -74.0060}
+        "state": "New York",
+        "lat": 40.7128,
+        "lon": -74.0060,
+        "tz": "-05:00"
+    },
+    "tokyo,jp": {
+        "name": "Tokyo",
+        "country": "JP",
+        "state": "Tokyo",
+        "lat": 35.6762,
+        "lon": 139.6503,
+        "tz": "+09:00"
     }
 }
 
-def generate_sample_weather(city_name: str, date: str, units: str) -> dict:
+
+def convert_temperature(temp: float, units: str) -> float:
+    """Convert temperature from Kelvin to specified units"""
+    if units == "metric":
+        return round(temp - 273.15, 2)  # Kelvin to Celsius
+    elif units == "imperial":
+        return round((temp - 273.15) * 9 / 5 + 32, 2)  # Kelvin to Fahrenheit
+    return round(temp, 2)  # Standard (Kelvin)
+
+
+def convert_wind_speed(speed: float, units: str) -> float:
+    """Convert wind speed from m/s to specified units"""
+    if units == "imperial":
+        return round(speed * 2.237, 2)  # m/s to mph
+    return round(speed, 2)  # metric and standard (m/s)
+
+
+def generate_sample_weather(city_key: str, date: str, units: Literal["standard", "metric", "imperial"]) -> dict:
     """Generate sample weather data for testing purposes"""
+    city_data = CITIES[city_key]
+
+    # Base temperature in Kelvin
+    base_temp = 293.15  # 20°C / 68°F
+    temp_data = {
+        "min": base_temp - 5,
+        "max": base_temp + 5,
+        "afternoon": base_temp + 3,
+        "night": base_temp - 3,
+        "evening": base_temp + 1,
+        "morning": base_temp - 2
+    }
+
+    # Convert temperatures based on requested units
+    converted_temp = {
+        k: convert_temperature(v, units)
+        for k, v in temp_data.items()
+    }
+
+    # Base wind speed in m/s
+    base_wind_speed = 5.2
+
     return {
-        "city": SAMPLE_CITIES[city_name.lower()],
+        "lat": city_data["lat"],
+        "lon": city_data["lon"],
+        "tz": city_data["tz"],
         "date": date,
-        "weather": {
-            "temperature": {
-                "min": 12.5,
-                "max": 18.5,
-                "morning": 13.2,
-                "day": 17.8,
-                "evening": 15.5,
-                "night": 12.8,
-                "feels_like": {
-                    "morning": 12.5,
-                    "day": 17.2,
-                    "evening": 15.0,
-                    "night": 12.1
-                }
-            },
-            "humidity": {
-                "morning": 65,
-                "day": 55,
-                "evening": 60,
-                "night": 70
-            },
-            "pressure": 1012,
-            "wind": {
-                "speed": 5.2,
-                "direction": "NE"
-            },
-            "precipitation": {
-                "probability": 30,
-                "total": 0.5
-            },
-            "sun": {
-                "sunrise": "07:15:00",
-                "sunset": "16:45:00"
-            },
-            "summary": "Partly cloudy throughout the day with a chance of rain"
+        "units": units,
+        "cloud_cover": {
+            "afternoon": 45
         },
-        "meta": {
-            "cached": True,
-            "cache_time": datetime.utcnow().isoformat() + "Z",
-            "provider": "OpenWeatherMap",
-            "data_type": "current"
+        "humidity": {
+            "afternoon": 65
+        },
+        "precipitation": {
+            "total": 0.5
+        },
+        "temperature": converted_temp,
+        "pressure": {
+            "afternoon": 1015
+        },
+        "wind": {
+            "max": {
+                "speed": convert_wind_speed(base_wind_speed, units),
+                "direction": 120
+            }
         }
     }
 
-def get_sample_stats(city_name: str, start_date: str, end_date: str, units: str) -> dict:
+
+def get_sample_stats(
+        city_key: str,
+        start_date: str,
+        end_date: str,
+        units: Literal["standard", "metric", "imperial"]
+) -> dict:
     """Generate sample weather statistics"""
-    return {
-        "city": SAMPLE_CITIES[city_name.lower()],
+    city_data = CITIES[city_key]
+    base_temp = 293.15  # Base temperature in Kelvin
+
+    stats = {
+        "location": {
+            "name": city_data["name"],
+            "country": city_data["country"],
+            "lat": city_data["lat"],
+            "lon": city_data["lon"],
+            "tz": city_data["tz"]
+        },
         "period": {
             "start": start_date,
             "end": end_date
         },
         "temperature": {
-            "min": 10.5,
-            "max": 22.3,
-            "average": 16.4
+            "min": convert_temperature(base_temp - 8, units),
+            "max": convert_temperature(base_temp + 8, units),
+            "average": convert_temperature(base_temp, units)
         },
         "precipitation": {
             "total": 45.2,
-            "rainy_days": 8
+            "days_with_precipitation": 8
         },
-        "common_conditions": [
-            {"condition": "Partly cloudy", "frequency": 45},
-            {"condition": "Clear sky", "frequency": 30},
-            {"condition": "Light rain", "frequency": 25}
-        ],
-        "meta": {
-            "cached": True,
-            "cache_time": datetime.utcnow().isoformat() + "Z"
+        "wind": {
+            "average_speed": convert_wind_speed(4.5, units),
+            "max_speed": convert_wind_speed(12.3, units)
+        },
+        "humidity": {
+            "average": 65,
+            "min": 45,
+            "max": 85
         }
     }
+
+    return stats
