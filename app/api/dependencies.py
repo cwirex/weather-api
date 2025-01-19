@@ -3,7 +3,8 @@ from typing import AsyncGenerator
 from app.core.config import settings
 from app.services.factory import get_weather_cache, get_weather_client
 from app.services.weather_cache import WeatherCache
-from app.services.openweather_client import OpenWeatherClient
+from app.services.openmeteo_client import OpenMeteoClient
+
 
 async def verify_api_key(
     x_api_key: str = Header(..., alias="X-API-Key")
@@ -15,6 +16,7 @@ async def verify_api_key(
         )
     return x_api_key
 
+
 async def verify_admin_access(
     x_api_key: str = Depends(verify_api_key)
 ) -> str:
@@ -25,6 +27,7 @@ async def verify_admin_access(
         )
     return x_api_key
 
+
 async def get_cache() -> AsyncGenerator[WeatherCache, None]:
     cache = get_weather_cache()
     try:
@@ -32,5 +35,6 @@ async def get_cache() -> AsyncGenerator[WeatherCache, None]:
     finally:
         await cache.close()
 
-async def get_weather_service() -> OpenWeatherClient:
+
+async def get_weather_service() -> OpenMeteoClient:
     return get_weather_client()

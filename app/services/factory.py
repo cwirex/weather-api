@@ -1,6 +1,6 @@
 from app.core.config import settings
 from app.services.weather_cache import WeatherCache
-from app.services.openweather_client import OpenWeatherClient
+from app.services.openmeteo_client import OpenMeteoClient
 
 _weather_cache = None
 _weather_client = None
@@ -16,11 +16,8 @@ def get_weather_cache() -> WeatherCache:
         )
     return _weather_cache
 
-def get_weather_client() -> OpenWeatherClient:
+def get_weather_client() -> OpenMeteoClient:
     global _weather_client
     if _weather_client is None:
-        _weather_client = OpenWeatherClient(
-            api_key=settings.OPENWEATHER_API_KEY,
-            base_url=settings.OPENWEATHER_BASE_URL
-        )
+        _weather_client = OpenMeteoClient()
     return _weather_client

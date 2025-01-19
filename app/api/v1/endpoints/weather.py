@@ -2,8 +2,9 @@ from fastapi import APIRouter, Query, Path, HTTPException, Header, Depends
 from datetime import datetime, timedelta
 from typing import Literal
 from app.core.cities_data import CITIES
+from app.services.openmeteo_client import OpenMeteoClient
 from app.services.weather_cache import WeatherCache
-from app.services.openweather_client import OpenWeatherClient
+from app.models import WeatherMeta  # Added import for WeatherMeta
 from app.api.dependencies import verify_api_key, get_cache, get_weather_service
 
 router = APIRouter()
@@ -34,10 +35,10 @@ async def get_current_weather(
         city: str = Path(..., description="City name"),
         units: Literal["standard", "metric", "imperial"] = Query("metric"),
         weather_cache: WeatherCache = Depends(get_cache),
-        weather_client: OpenWeatherClient = Depends(get_weather_service),
+        weather_client: OpenMeteoClient = Depends(get_weather_service),
         x_api_key: str = Depends(verify_api_key)
 ):
-    """Get current weather data"""
+    """Get current weather data with 3 days history and 7 days forecast"""
     city_key = get_city_key(city)
     city_data = CITIES[city_key]
     current_date = datetime.now().strftime("%Y-%m-%d")
@@ -47,20 +48,20 @@ async def get_current_weather(
     if cached_data:
         return cached_data
 
-    # If not in cache, fetch from OpenWeather
+    # If not in cache, fetch from OpenMeteo
     weather_data = await weather_client.get_current_weather(
         lat=city_data["lat"],
         lon=city_data["lon"],
         units=units
     )
 
-    # Add metadata
-    weather_data["meta"] = {
-        "cached": False,
-        "cache_time": None,
-        "provider": "OpenWeatherMap",
-        "data_type": "current"
-    }
+    # Add metadata using WeatherMeta model
+    weather_data.meta = WeatherMeta(
+        cached=False,
+        cache_time=None,
+        provider="OpenMeteo",
+        data_type="current"
+    )
 
     # Store in cache
     await weather_cache.set(city_key, current_date, "current", weather_data)
@@ -74,7 +75,7 @@ async def get_historical_weather(
         date: str = Query(..., regex="^\d{4}-\d{2}-\d{2}$"),
         units: Literal["standard", "metric", "imperial"] = Query("metric"),
         weather_cache: WeatherCache = Depends(get_cache),
-        weather_client: OpenWeatherClient = Depends(get_weather_service),
+        weather_client: OpenMeteoClient = Depends(get_weather_service),
         x_api_key: str = Depends(verify_api_key)
 ):
     """Get historical weather data"""
@@ -84,7 +85,7 @@ async def get_historical_weather(
     # Validate date range
     try:
         requested_date = datetime.strptime(date, "%Y-%m-%d")
-        min_date = datetime.strptime("1979-01-02", "%Y-%m-%d")
+        min_date = datetime.strptime("2022-01-01", "%Y-%m-%d")  # OpenMeteo historical limit
         max_date = datetime.now() - timedelta(days=1)
 
         if not (min_date <= requested_date <= max_date):
@@ -93,7 +94,7 @@ async def get_historical_weather(
                 detail={
                     "code": "INVALID_DATE",
                     "message": "Date out of valid range",
-                    "details": "Historical data available from 1979-01-02 up to yesterday"
+                    "details": "Historical data available from 2022-01-01 up to yesterday"
                 }
             )
     except ValueError:
@@ -111,7 +112,7 @@ async def get_historical_weather(
     if cached_data:
         return cached_data
 
-    # If not in cache, fetch from OpenWeather
+    # If not in cache, fetch from OpenMeteo
     weather_data = await weather_client.get_historical_weather(
         lat=city_data["lat"],
         lon=city_data["lon"],
@@ -119,13 +120,13 @@ async def get_historical_weather(
         units=units
     )
 
-    # Add metadata
-    weather_data["meta"] = {
-        "cached": False,
-        "cache_time": None,
-        "provider": "OpenWeatherMap",
-        "data_type": "historical"
-    }
+    # Add metadata using WeatherMeta model
+    weather_data.meta = WeatherMeta(
+        cached=False,
+        cache_time=None,
+        provider="OpenMeteo",
+        data_type="historical"
+    )
 
     # Store in cache
     await weather_cache.set(city_key, date, "historical", weather_data)
@@ -139,7 +140,7 @@ async def get_forecast(
         date: str = Query(..., regex="^\d{4}-\d{2}-\d{2}$"),
         units: Literal["standard", "metric", "imperial"] = Query("metric"),
         weather_cache: WeatherCache = Depends(get_cache),
-        weather_client: OpenWeatherClient = Depends(get_weather_service),
+        weather_client: OpenMeteoClient = Depends(get_weather_service),
         x_api_key: str = Depends(verify_api_key)
 ):
     """Get weather forecast"""
@@ -150,7 +151,7 @@ async def get_forecast(
     try:
         requested_date = datetime.strptime(date, "%Y-%m-%d")
         min_date = datetime.now() + timedelta(days=1)
-        max_date = datetime.now() + timedelta(days=548)  # ~1.5 years
+        max_date = datetime.now() + timedelta(days=7)  # OpenMeteo free tier limit
 
         if not (min_date <= requested_date <= max_date):
             raise HTTPException(
@@ -158,7 +159,7 @@ async def get_forecast(
                 detail={
                     "code": "INVALID_DATE",
                     "message": "Date out of valid range",
-                    "details": "Forecast available from tomorrow up to 1.5 years ahead"
+                    "details": "Forecast available from tomorrow up to 7 days ahead"
                 }
             )
     except ValueError:
@@ -176,7 +177,7 @@ async def get_forecast(
     if cached_data:
         return cached_data
 
-    # If not in cache, fetch from OpenWeather
+    # If not in cache, fetch from OpenMeteo
     weather_data = await weather_client.get_forecast(
         lat=city_data["lat"],
         lon=city_data["lon"],
@@ -184,13 +185,13 @@ async def get_forecast(
         units=units
     )
 
-    # Add metadata
-    weather_data["meta"] = {
-        "cached": False,
-        "cache_time": None,
-        "provider": "OpenWeatherMap",
-        "data_type": "forecast"
-    }
+    # Add metadata using WeatherMeta model
+    weather_data.meta = WeatherMeta(
+        cached=False,
+        cache_time=None,
+        provider="OpenMeteo",
+        data_type="forecast"
+    )
 
     # Store in cache
     await weather_cache.set(city_key, date, "forecast", weather_data)
@@ -205,7 +206,7 @@ async def get_weather_stats(
         end_date: str = Query(..., regex="^\d{4}-\d{2}-\d{2}$"),
         units: Literal["standard", "metric", "imperial"] = Query("metric"),
         weather_cache: WeatherCache = Depends(get_cache),
-        weather_client: OpenWeatherClient = Depends(get_weather_service),
+        weather_client: OpenMeteoClient = Depends(get_weather_service),
         x_api_key: str = Depends(verify_api_key)
 ):
     """Get weather statistics"""
@@ -214,6 +215,11 @@ async def get_weather_stats(
     try:
         start = datetime.strptime(start_date, "%Y-%m-%d")
         end = datetime.strptime(end_date, "%Y-%m-%d")
+
+        # Validate date range
+        min_date = datetime.strptime("2022-01-01", "%Y-%m-%d")  # OpenMeteo historical limit
+        max_date = datetime.now() - timedelta(days=1)
+
         if start > end:
             raise HTTPException(
                 status_code=400,
@@ -221,6 +227,16 @@ async def get_weather_stats(
                     "code": "INVALID_DATE_RANGE",
                     "message": "Start date must be before end date",
                     "details": None
+                }
+            )
+
+        if not (min_date <= start <= max_date) or not (min_date <= end <= max_date):
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "INVALID_DATE_RANGE",
+                    "message": "Dates out of valid range",
+                    "details": "Statistics available from 2022-01-01 up to yesterday"
                 }
             )
     except ValueError:
@@ -248,13 +264,13 @@ async def get_weather_stats(
         units=units
     )
 
-    # Add metadata
-    weather_data["meta"] = {
-        "cached": False,
-        "cache_time": None,
-        "provider": "OpenWeatherMap",
-        "data_type": "stats"
-    }
+    # Add metadata using WeatherMeta model
+    weather_data.meta = WeatherMeta(
+        cached=False,
+        cache_time=None,
+        provider="OpenMeteo",
+        data_type="stats"
+    )
 
     # Store in cache
     await weather_cache.set(city_key, cache_key, "stats", weather_data)

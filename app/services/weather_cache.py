@@ -48,7 +48,7 @@ class WeatherCache:
     def _get_ttl(self, data_type: str, date: Optional[str] = None) -> int:
         """Get TTL in seconds based on data type and date"""
         if data_type == "current":
-            return 30 * 60  # 30 minutes
+            return 15 * 60  # 15 minutes (OpenMeteo updates every ~15 mins)
 
         if data_type == "forecast":
             if date:
@@ -56,13 +56,13 @@ class WeatherCache:
                         datetime.strptime(date, "%Y-%m-%d").date() -
                         datetime.now().date()
                 ).days
-                if days_ahead <= 5:
-                    return 3 * 60 * 60  # 3 hours
-                return 12 * 60 * 60  # 12 hours
-            return 3 * 60 * 60  # Default to 3 hours
+                if days_ahead <= 3:
+                    return 2 * 60 * 60  # 2 hours for near-term forecast
+                return 4 * 60 * 60  # 4 hours for extended forecast
+            return 2 * 60 * 60  # Default to 2 hours
 
         if data_type == "historical":
-            return 7 * 24 * 60 * 60  # 7 days
+            return 24 * 60 * 60  # 24 hours (historical data doesn't change often)
 
         if data_type == "stats":
             return 24 * 60 * 60  # 24 hours
@@ -88,7 +88,7 @@ class WeatherCache:
                 meta = WeatherMeta(
                     cached=True,
                     cache_time=datetime.now().isoformat() + "Z",
-                    provider="OpenWeatherMap",
+                    provider="OpenMeteo",  # Updated provider
                     data_type=data_type
                 )
 
@@ -181,7 +181,8 @@ class WeatherCache:
         patterns = {
             "current_weather": "weather:*:current",
             "historical": "weather:*:historical:*",
-            "forecast": "weather:*:forecast:*"
+            "forecast": "weather:*:forecast:*",
+            "stats": "weather:*:stats:*"  # Added stats pattern
         }
 
         type_distribution = {}

@@ -15,7 +15,7 @@ class Precipitation(BaseModel):
 
 
 class Pressure(BaseModel):
-    afternoon: int = Field(..., description="Atmospheric pressure at 12:00 in hPa")
+    afternoon: float = Field(..., description="Atmospheric pressure at 12:00 in hPa")  # Changed from int to float
 
 
 class Temperature(BaseModel):
@@ -39,7 +39,7 @@ class Wind(BaseModel):
 class WeatherMeta(BaseModel):
     cached: bool = Field(..., description="Whether the response was served from cache")
     cache_time: Optional[str] = Field(None, description="Time when the data was cached")
-    provider: str = Field("OpenWeatherMap", description="Weather data provider")
+    provider: str = Field("OpenMeteo", description="Weather data provider")  # Updated default provider
     data_type: str = Field(..., description="Type of data (current/historical/forecast/stats)")
 
 
