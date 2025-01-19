@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Query, Path, HTTPException, Header
 from datetime import datetime, timedelta
-from typing import Optional, Literal
-from app.core.sample_data import generate_sample_weather, get_sample_stats, CITIES
+from typing import Literal
+from app.core.sample_data import generate_sample_weather, get_sample_stats
+from app.core.cities_data import CITIES
 
 router = APIRouter()
 

@@ -1,41 +1,6 @@
 from datetime import datetime
 from typing import Literal
-
-# Comprehensive city data
-CITIES = {
-    "london,gb": {
-        "name": "London",
-        "country": "GB",
-        "state": "England",
-        "lat": 51.5074,
-        "lon": -0.1278,
-        "tz": "+00:00"
-    },
-    "paris,fr": {
-        "name": "Paris",
-        "country": "FR",
-        "state": "Île-de-France",
-        "lat": 48.8566,
-        "lon": 2.3522,
-        "tz": "+01:00"
-    },
-    "new york,us": {
-        "name": "New York",
-        "country": "US",
-        "state": "New York",
-        "lat": 40.7128,
-        "lon": -74.0060,
-        "tz": "-05:00"
-    },
-    "tokyo,jp": {
-        "name": "Tokyo",
-        "country": "JP",
-        "state": "Tokyo",
-        "lat": 35.6762,
-        "lon": 139.6503,
-        "tz": "+09:00"
-    }
-}
+from app.core.cities_data import CITIES
 
 
 def convert_temperature(temp: float, units: str) -> float:

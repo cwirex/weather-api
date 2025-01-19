@@ -5,13 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02ea3201-10ff-4023-ba0f-563b65c92720" name="Changes" comment="API health check OK">
-      <change afterPath="$PROJECT_DIR$/app/api/dependencies.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/api/v1/endpoints/cache.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/api/v1/endpoints/cities.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/core/cities_data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/api/dependencies.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/dependencies.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/api/v1/endpoints/cities.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/v1/endpoints/cities.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/api/v1/endpoints/weather.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/v1/endpoints/weather.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/v1/router.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/v1/router.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/core/sample_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/sample_data.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -102,7 +100,7 @@
       <option name="presentableId" value="Default" />
       <updated>1737291930145</updated>
       <workItem from="1737291931758" duration="5052000" />
-      <workItem from="1737308706953" duration="301000" />
+      <workItem from="1737308706953" duration="1604000" />
     </task>
     <task id="LOCAL-00001" summary="Init">
       <option name="closed" value="true" />
