@@ -116,15 +116,18 @@ async def get_historical_weather(
 
     # If not in cache, try MongoDB for tracked cities
     if await mongo_storage.is_tracked_city(city_key):
-        mongo_data = await mongo_storage.get_weather(city_key, date)
+        mongo_data = await mongo_storage.get_weather(city_key, date, units=units)
         if mongo_data:
-            # Add metadata
+            # Update metadata to indicate MongoDB source
             mongo_data.meta = WeatherMeta(
                 cached=False,
                 cache_time=None,
-                provider="OpenMeteo",
+                provider="OpenMeteo [MongoDB Storage]",
                 data_type="historical"
             )
+            # Convert units if necessary
+            if mongo_data.units != units:
+                mongo_data = weather_cache._convert_units(mongo_data, mongo_data.units, units)
 
             # Store in cache
             await weather_cache.set(city_key, date, "historical", mongo_data)

@@ -6,10 +6,10 @@ from app.models import WeatherResponse, HistoricalWeatherRecord
 
 class MongoWeatherStorage:
     def __init__(
-        self,
-        mongo_url: str,
-        database: str = "weather_history",
-        collection: str = "historical_weather"
+            self,
+            mongo_url: str,
+            database: str = "weather_history",
+            collection: str = "historical_weather"
     ):
         self.client = AsyncIOMotorClient(mongo_url)
         self.db = self.client[database]
@@ -21,7 +21,7 @@ class MongoWeatherStorage:
         await self.collection.create_index([("city_key", 1), ("date", 1)], unique=True)
         await self.collection.create_index("last_updated")
 
-    async def get_weather(self, city_key: str, date: str) -> Optional[WeatherResponse]:
+    async def get_weather(self, city_key: str, date: str, units: str = "standard") -> Optional[WeatherResponse]:
         """Get historical weather data for a specific city and date"""
         if city_key not in self.tracked_cities:
             return None
@@ -30,10 +30,13 @@ class MongoWeatherStorage:
         if not record:
             return None
 
+        from app.core.cities_data import CITIES
+        city_data = CITIES[city_key]
+
         # Convert MongoDB record to WeatherResponse
         return WeatherResponse(
-            lat=0.0,  # You'll need to get these from cities_data
-            lon=0.0,
+            lat=city_data["lat"],
+            lon=city_data["lon"],
             date=record["date"],
             units="standard",  # We'll store in standard units
             cloud_cover={"afternoon": record["cloud_cover"]},
