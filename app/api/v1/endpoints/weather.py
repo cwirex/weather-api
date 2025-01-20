@@ -39,7 +39,7 @@ async def get_current_weather(
         weather_client: OpenMeteoClient = Depends(get_weather_service),
         x_api_key: str = Depends(verify_api_key)
 ):
-    """Get current weather data with 3 days history and 7 days forecast"""
+    """Get current weather data"""
     city_key = get_city_key(city)
     city_data = CITIES[city_key]
     current_date = datetime.now().strftime("%Y-%m-%d")

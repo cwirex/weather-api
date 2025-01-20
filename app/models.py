@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, Field, confloat
-from typing import Literal, Optional, Dict, Any
+from typing import Literal, Optional, Dict, Any, List
 
 
 class CloudCover(BaseModel):
@@ -132,3 +132,16 @@ class HistoricalWeatherRecord(BaseModel):
     humidity: int
     pressure: int
     last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+class MongoDBStats(BaseModel):
+    status: str = Field(..., description="Current status of the MongoDB storage")
+    total_records: int = Field(..., description="Total number of weather records")
+    earliest_record: str = Field(..., description="Date of the earliest record")
+    latest_record: str = Field(..., description="Date of the latest record")
+    storage_size: str = Field(..., description="Size of the MongoDB collection")
+    records_by_city: Dict[str, int] = Field(..., description="Number of records per city")
+    cities_tracked: List[str] = Field(..., description="List of cities being tracked")
+    date_coverage: Dict[str, Dict[str, Any]] = Field(
+        ...,
+        description="Coverage statistics per city (start date, end date, total days, missing days)"
+    )

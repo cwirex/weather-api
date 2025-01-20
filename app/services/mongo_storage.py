@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from motor.motor_asyncio import AsyncIOMotorClient
-from app.models import WeatherResponse, HistoricalWeatherRecord
+from app.models import WeatherResponse, HistoricalWeatherRecord, MongoDBStats
 
 
 class MongoWeatherStorage:
@@ -87,6 +87,75 @@ class MongoWeatherStorage:
             {"$set": record.model_dump()},
             upsert=True
         )
+
+    async def get_stats(self) -> MongoDBStats:
+        """Get MongoDB storage statistics"""
+        try:
+            # Get collection stats
+            stats = await self.db.command("collStats", self.collection.name)
+
+            # Get record counts by city
+            pipeline = [
+                {"$group": {"_id": "$city_key", "count": {"$sum": 1}}}
+            ]
+            city_counts = {doc["_id"]: doc["count"]
+                           async for doc in self.collection.aggregate(pipeline)}
+
+            # Get date range info for each city
+            date_coverage = {}
+            for city in self.tracked_cities:
+                first_record = await self.collection.find_one(
+                    {"city_key": city},
+                    sort=[("date", 1)]
+                )
+                last_record = await self.collection.find_one(
+                    {"city_key": city},
+                    sort=[("date", -1)]
+                )
+
+                if first_record and last_record:
+                    start_date = datetime.strptime(first_record["date"], "%Y-%m-%d")
+                    end_date = datetime.strptime(last_record["date"], "%Y-%m-%d")
+                    total_days = (end_date - start_date).days + 1
+
+                    # Count actual records
+                    actual_records = await self.collection.count_documents({"city_key": city})
+                    missing_days = total_days - actual_records
+
+                    date_coverage[city] = {
+                        "start_date": first_record["date"],
+                        "end_date": last_record["date"],
+                        "total_days": total_days,
+                        "missing_days": missing_days,
+                        "coverage_percentage": round((actual_records / total_days) * 100, 2)
+                    }
+
+            # Get earliest and latest records overall
+            earliest = await self.collection.find_one({}, sort=[("date", 1)])
+            latest = await self.collection.find_one({}, sort=[("date", -1)])
+
+            return MongoDBStats(
+                status="operational",
+                total_records=await self.collection.count_documents({}),
+                earliest_record=earliest["date"] if earliest else None,
+                latest_record=latest["date"] if latest else None,
+                storage_size=f"{stats['size'] / 1024 / 1024:.1f} MB",
+                records_by_city=city_counts,
+                cities_tracked=list(self.tracked_cities),
+                date_coverage=date_coverage
+            )
+        except Exception as e:
+            return MongoDBStats(
+                status="error",
+                total_records=0,
+                earliest_record=None,
+                latest_record=None,
+                storage_size="0 MB",
+                records_by_city={},
+                cities_tracked=list(self.tracked_cities),
+                date_coverage={},
+                error=str(e)
+            )
 
     async def is_tracked_city(self, city_key: str) -> bool:
         """Check if city is being tracked for historical data"""
