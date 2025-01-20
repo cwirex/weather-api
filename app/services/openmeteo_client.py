@@ -19,7 +19,6 @@ from app.models import (
     HumidityStats
 )
 
-
 class OpenMeteoClient:
     def __init__(
             self,
@@ -30,67 +29,19 @@ class OpenMeteoClient:
         self.historical_url = historical_url
         self._client: Optional[httpx.AsyncClient] = None
 
-    @property
-    async def client(self) -> httpx.AsyncClient:
-        """Get or create HTTP client"""
-        if self._client is None or self._client.is_closed:
-            self._client = httpx.AsyncClient(timeout=30.0)
-        return self._client
+    def _convert_temperature(self, temp: float, to_units: str) -> float:
+        """Convert temperature from Celsius (OpenMeteo default) to requested units"""
+        if to_units == "standard":  # Convert Celsius to Kelvin
+            return round(temp + 273.15, 2)
+        elif to_units == "imperial":  # Convert Celsius to Fahrenheit
+            return round((temp * 9/5) + 32, 2)
+        return round(temp, 2)  # metric (Celsius)
 
-    async def close(self):
-        """Close the HTTP client"""
-        if self._client and not self._client.is_closed:
-            await self._client.aclose()
-            self._client = None
-
-    async def _make_request(self, url: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Make request to OpenMeteo API with error handling"""
-        try:
-            client = await self.client
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                raise HTTPException(
-                    status_code=404,
-                    detail={
-                        "code": "LOCATION_NOT_FOUND",
-                        "message": "Location not found in OpenMeteo database",
-                        "details": str(e)
-                    }
-                )
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "code": "WEATHER_API_ERROR",
-                    "message": "Error fetching weather data",
-                    "details": str(e)
-                }
-            )
-        except httpx.RequestError as e:
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "code": "WEATHER_API_ERROR",
-                    "message": "Error connecting to weather service",
-                    "details": str(e)
-                }
-            )
-
-    def _convert_temperature(self, temp: float, units: str) -> float:
-        """Convert temperature to requested units"""
-        if units == "standard":  # Convert Celsius to Kelvin
-            return temp + 273.15
-        elif units == "imperial":  # Convert Celsius to Fahrenheit
-            return (temp * 9 / 5) + 32
-        return temp  # metric (Celsius)
-
-    def _convert_wind_speed(self, speed: float, units: str) -> float:
-        """Convert wind speed to requested units"""
-        if units == "imperial":  # Convert km/h to mph
-            return speed * 0.621371
-        return speed  # metric (km/h)
+    def _convert_wind_speed(self, speed: float, to_units: str) -> float:
+        """Convert wind speed from km/h (OpenMeteo default) to requested units"""
+        if to_units == "imperial":  # Convert km/h to mph
+            return round(speed * 0.621371, 2)
+        return round(speed, 2)  # metric and standard use m/s
 
     async def get_current_weather(
             self,
@@ -129,16 +80,17 @@ class OpenMeteoClient:
         daily = data["daily"]
 
         # Convert values based on requested units
-        temp = self._convert_temperature(current["temperature_2m"], units)
-        temp_min = self._convert_temperature(daily["temperature_2m_min"][3], units)  # Today's min
-        temp_max = self._convert_temperature(daily["temperature_2m_max"][3], units)  # Today's max
-        wind_speed = self._convert_wind_speed(current["wind_speed_10m"], units)
+        temp = current["temperature_2m"]  # OpenMeteo returns in Celsius
+        temp_min = daily["temperature_2m_min"][3]
+        temp_max = daily["temperature_2m_max"][3]
+        wind_speed = current["wind_speed_10m"]
 
-        return WeatherResponse(
+        # Create response with converted values
+        response = WeatherResponse(
             lat=lat,
             lon=lon,
             date=datetime.now().strftime("%Y-%m-%d"),
-            units=units,
+            units=units,  # Set the requested units
             cloud_cover=CloudCover(
                 afternoon=current["cloud_cover"]
             ),
@@ -149,23 +101,25 @@ class OpenMeteoClient:
                 total=current["precipitation"]
             ),
             temperature=Temperature(
-                min=temp_min,
-                max=temp_max,
-                afternoon=temp,  # Current temp for afternoon
-                night=temp,  # Current temp for night
-                evening=temp,  # Current temp for evening
-                morning=temp  # Current temp for morning
+                min=self._convert_temperature(temp_min, units),
+                max=self._convert_temperature(temp_max, units),
+                afternoon=self._convert_temperature(temp, units),
+                night=self._convert_temperature(temp, units),
+                evening=self._convert_temperature(temp, units),
+                morning=self._convert_temperature(temp, units)
             ),
             pressure=Pressure(
                 afternoon=current["pressure_msl"]
             ),
             wind=Wind(
                 max=WindMax(
-                    speed=wind_speed,
+                    speed=self._convert_wind_speed(wind_speed, units),
                     direction=current["wind_direction_10m"]
                 )
             )
         )
+
+        return response
 
     async def get_historical_weather(
             self,
@@ -203,7 +157,7 @@ class OpenMeteoClient:
             lat=lat,
             lon=lon,
             date=date,
-            units=units,
+            units=units,  # Set the requested units
             cloud_cover=CloudCover(
                 afternoon=50  # Default value as historical data doesn't include cloud cover
             ),
@@ -281,7 +235,7 @@ class OpenMeteoClient:
             lat=lat,
             lon=lon,
             date=date,
-            units=units,
+            units=units,  # Set the requested units
             cloud_cover=CloudCover(
                 afternoon=50  # Default value as forecast doesn't include hourly cloud cover
             ),
@@ -339,10 +293,9 @@ class OpenMeteoClient:
         # Calculate temperature statistics
         temp_min = min(daily["temperature_2m_min"])
         temp_max = max(daily["temperature_2m_max"])
-        temp_avg = (sum(daily["temperature_2m_min"]) + sum(daily["temperature_2m_max"])) / (
-                    len(daily["temperature_2m_min"]) * 2)
+        temp_avg = (sum(daily["temperature_2m_min"]) + sum(daily["temperature_2m_max"])) / (len(daily["temperature_2m_min"]) * 2)
 
-        # Convert temperature values
+        # Convert temperature values to requested units
         temp_min = self._convert_temperature(temp_min, units)
         temp_max = self._convert_temperature(temp_max, units)
         temp_avg = self._convert_temperature(temp_avg, units)
@@ -352,7 +305,7 @@ class OpenMeteoClient:
         max_wind = max(wind_speeds)
         avg_wind = sum(wind_speeds) / len(wind_speeds)
 
-        # Convert wind speeds
+        # Convert wind speeds to requested units
         max_wind = self._convert_wind_speed(max_wind, units)
         avg_wind = self._convert_wind_speed(avg_wind, units)
 
@@ -381,3 +334,51 @@ class OpenMeteoClient:
                 max=80
             )
         )
+
+    async def close(self):
+        """Close the HTTP client"""
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
+            self._client = None
+
+    @property
+    async def client(self) -> httpx.AsyncClient:
+        """Get or create HTTP client"""
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=30.0)
+        return self._client
+
+    async def _make_request(self, url: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Make request to OpenMeteo API with error handling"""
+        try:
+            client = await self.client
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                raise HTTPException(
+                    status_code=404,
+                    detail={
+                        "code": "LOCATION_NOT_FOUND",
+                        "message": "Location not found in OpenMeteo database",
+                        "details": str(e)
+                    }
+                )
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "code": "WEATHER_API_ERROR",
+                    "message": "Error fetching weather data",
+                    "details": str(e)
+                }
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "code": "WEATHER_API_ERROR",
+                    "message": "Error connecting to weather service",
+                    "details": str(e)
+                }
+            )

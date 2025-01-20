@@ -8,7 +8,10 @@ from app.models import (
     WeatherStats,
     WeatherMeta,
     CacheStats,
-    CacheClearResponse
+    CacheClearResponse,
+    Wind,
+    WindMax,
+    Temperature
 )
 
 
@@ -69,13 +72,91 @@ class WeatherCache:
 
         return 60 * 60  # Default 1 hour
 
+    def _convert_temperature(self, temp: float, from_units: str, to_units: str) -> float:
+        """Convert temperature between units"""
+        # First convert to Kelvin if not already
+        if from_units == "metric":
+            kelvin = temp + 273.15
+        elif from_units == "imperial":
+            kelvin = (temp - 32) * 5 / 9 + 273.15
+        else:  # standard (Kelvin)
+            kelvin = temp
+
+        # Then convert from Kelvin to target units
+        if to_units == "metric":
+            return round(kelvin - 273.15, 2)
+        elif to_units == "imperial":
+            return round((kelvin - 273.15) * 9 / 5 + 32, 2)
+        return round(kelvin, 2)  # standard (Kelvin)
+
+    def _convert_wind_speed(self, speed: float, from_units: str, to_units: str) -> float:
+        """Convert wind speed between units"""
+        # First convert to m/s if not already
+        if from_units == "imperial":
+            ms = speed / 2.237  # mph to m/s
+        else:
+            ms = speed  # both metric and standard use m/s
+
+        # Then convert to target units
+        if to_units == "imperial":
+            return round(ms * 2.237, 2)  # m/s to mph
+        return round(ms, 2)  # both metric and standard use m/s
+
+    def _convert_units(
+            self,
+            data: Union[WeatherResponse, WeatherStats],
+            from_units: str,
+            to_units: str
+    ) -> Union[WeatherResponse, WeatherStats]:
+        """Convert all unit-dependent values in the weather data"""
+        if from_units == to_units:
+            return data
+
+        if isinstance(data, WeatherResponse):
+            # Convert temperatures
+            old_temp = data.temperature
+            data.temperature = Temperature(
+                min=self._convert_temperature(old_temp.min, from_units, to_units),
+                max=self._convert_temperature(old_temp.max, from_units, to_units),
+                afternoon=self._convert_temperature(old_temp.afternoon, from_units, to_units),
+                night=self._convert_temperature(old_temp.night, from_units, to_units),
+                evening=self._convert_temperature(old_temp.evening, from_units, to_units),
+                morning=self._convert_temperature(old_temp.morning, from_units, to_units)
+            )
+
+            # Convert wind speed
+            old_wind = data.wind.max
+            data.wind = Wind(
+                max=WindMax(
+                    speed=self._convert_wind_speed(old_wind.speed, from_units, to_units),
+                    direction=old_wind.direction
+                )
+            )
+
+            data.units = to_units
+
+        elif isinstance(data, WeatherStats):
+            # Convert temperature stats
+            old_temp = data.temperature
+            data.temperature.min = self._convert_temperature(old_temp.min, from_units, to_units)
+            data.temperature.max = self._convert_temperature(old_temp.max, from_units, to_units)
+            data.temperature.average = self._convert_temperature(old_temp.average, from_units, to_units)
+
+            # Convert wind stats
+            old_wind = data.wind
+            data.wind.average_speed = self._convert_wind_speed(old_wind.average_speed, from_units, to_units)
+            data.wind.max_speed = self._convert_wind_speed(old_wind.max_speed, from_units, to_units)
+
+        return data
+
     async def get(
             self,
             city: str,
             date: str,
-            data_type: str
+            data_type: str,
+            units: str = "metric"
     ) -> Optional[Union[WeatherResponse, WeatherStats]]:
-        """Get weather data from cache"""
+        """Get weather data from cache and convert to requested units"""
         redis = await self.get_redis()
         key = self._get_key(city, date, data_type)
 
@@ -83,28 +164,29 @@ class WeatherCache:
         if data:
             try:
                 json_data = json.loads(data)
+                cached_units = json_data.get("units", "standard")
 
                 # Add cache metadata
                 meta = WeatherMeta(
                     cached=True,
                     cache_time=datetime.now().isoformat() + "Z",
-                    provider="OpenMeteo",  # Updated provider
+                    provider="OpenMeteo",
                     data_type=data_type
                 )
 
                 if data_type == "stats":
                     stats = WeatherStats.model_validate(json_data)
                     stats.meta = meta
-                    return stats
+                    return self._convert_units(stats, cached_units, units)
                 else:
                     weather = WeatherResponse.model_validate(json_data)
                     weather.meta = meta
-                    return weather
+                    return self._convert_units(weather, cached_units, units)
 
             except json.JSONDecodeError:
                 await redis.delete(key)
                 return None
-            except ValueError as e:
+            except ValueError:
                 # Handle Pydantic validation errors
                 await redis.delete(key)
                 return None
@@ -117,13 +199,20 @@ class WeatherCache:
             data_type: str,
             data: Union[WeatherResponse, WeatherStats]
     ) -> None:
-        """Store weather data in cache"""
+        """Store weather data in cache (always in standard units)"""
         redis = await self.get_redis()
         key = self._get_key(city, date, data_type)
         ttl = self._get_ttl(data_type, date)
 
+        # Create a copy for caching
+        cache_data = data.model_copy(deep=True)
+
+        # Convert copy to standard units before caching
+        if cache_data.units != "standard":
+            cache_data = self._convert_units(cache_data, cache_data.units, "standard")
+
         # Remove meta information before caching
-        data_dict = data.model_dump()
+        data_dict = cache_data.model_dump()
         data_dict.pop("meta", None)
 
         await redis.set(
@@ -179,10 +268,10 @@ class WeatherCache:
 
         # Count keys by type
         patterns = {
-            "current_weather": "weather:*:current",
-            "historical": "weather:*:historical:*",
-            "forecast": "weather:*:forecast:*",
-            "stats": "weather:*:stats:*"  # Added stats pattern
+            "current_weather": "weather:*:*:current",  # Matches weather:{city}:{date}:current
+            "historical": "weather:*:*:historical",  # Matches weather:{city}:{date}:historical
+            "forecast": "weather:*:*:forecast",  # Matches weather:{city}:{date}:forecast
+            "stats": "weather:*:*:stats"  # Matches weather:{city}:{date}:stats
         }
 
         type_distribution = {}

@@ -4,7 +4,7 @@ from typing import Literal
 from app.core.cities_data import CITIES
 from app.services.openmeteo_client import OpenMeteoClient
 from app.services.weather_cache import WeatherCache
-from app.models import WeatherMeta  # Added import for WeatherMeta
+from app.models import WeatherMeta
 from app.api.dependencies import verify_api_key, get_cache, get_weather_service
 
 router = APIRouter()
@@ -43,8 +43,8 @@ async def get_current_weather(
     city_data = CITIES[city_key]
     current_date = datetime.now().strftime("%Y-%m-%d")
 
-    # Try to get from cache first
-    cached_data = await weather_cache.get(city_key, current_date, "current")
+    # Try to get from cache first, passing requested units
+    cached_data = await weather_cache.get(city_key, current_date, "current", units)
     if cached_data:
         return cached_data
 
@@ -55,7 +55,7 @@ async def get_current_weather(
         units=units
     )
 
-    # Add metadata using WeatherMeta model
+    # Add metadata
     weather_data.meta = WeatherMeta(
         cached=False,
         cache_time=None,
@@ -63,7 +63,7 @@ async def get_current_weather(
         data_type="current"
     )
 
-    # Store in cache
+    # Store in cache (it will be converted to standard units)
     await weather_cache.set(city_key, current_date, "current", weather_data)
 
     return weather_data
@@ -108,7 +108,7 @@ async def get_historical_weather(
         )
 
     # Try to get from cache first
-    cached_data = await weather_cache.get(city_key, date, "historical")
+    cached_data = await weather_cache.get(city_key, date, "historical", units)
     if cached_data:
         return cached_data
 
@@ -120,7 +120,7 @@ async def get_historical_weather(
         units=units
     )
 
-    # Add metadata using WeatherMeta model
+    # Add metadata
     weather_data.meta = WeatherMeta(
         cached=False,
         cache_time=None,
@@ -173,7 +173,7 @@ async def get_forecast(
         )
 
     # Try to get from cache first
-    cached_data = await weather_cache.get(city_key, date, "forecast")
+    cached_data = await weather_cache.get(city_key, date, "forecast", units)
     if cached_data:
         return cached_data
 
@@ -185,7 +185,7 @@ async def get_forecast(
         units=units
     )
 
-    # Add metadata using WeatherMeta model
+    # Add metadata
     weather_data.meta = WeatherMeta(
         cached=False,
         cache_time=None,
@@ -251,7 +251,7 @@ async def get_weather_stats(
 
     # Try to get from cache first
     cache_key = f"{start_date}_{end_date}"
-    cached_data = await weather_cache.get(city_key, cache_key, "stats")
+    cached_data = await weather_cache.get(city_key, cache_key, "stats", units)
     if cached_data:
         return cached_data
 
@@ -264,7 +264,7 @@ async def get_weather_stats(
         units=units
     )
 
-    # Add metadata using WeatherMeta model
+    # Add metadata
     weather_data.meta = WeatherMeta(
         cached=False,
         cache_time=None,

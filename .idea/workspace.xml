@@ -5,15 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02ea3201-10ff-4023-ba0f-563b65c92720" name="Changes" comment="API health check OK">
-      <change afterPath="$PROJECT_DIR$/app/services/openmeteo_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/dependencies.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/dependencies.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/api/v1/endpoints/weather.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/v1/endpoints/weather.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/core/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/core/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/factory.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/openweather_client.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/services/openmeteo_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/openmeteo_client.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/services/weather_cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/weather_cache.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -105,7 +99,8 @@
       <option name="presentableId" value="Default" />
       <updated>1737291930145</updated>
       <workItem from="1737291931758" duration="5052000" />
-      <workItem from="1737308706953" duration="10175000" />
+      <workItem from="1737308706953" duration="10813000" />
+      <workItem from="1737400285005" duration="3512000" />
     </task>
     <task id="LOCAL-00001" summary="Init">
       <option name="closed" value="true" />
