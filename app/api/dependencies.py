@@ -1,7 +1,8 @@
 from fastapi import HTTPException, Header, Depends
 from typing import AsyncGenerator
 from app.core.config import settings
-from app.services.factory import get_weather_cache, get_weather_client
+from app.services.factory import get_weather_cache, get_weather_client, get_mongo_storage_instance
+from app.services.mongo_storage import MongoWeatherStorage
 from app.services.weather_cache import WeatherCache
 from app.services.openmeteo_client import OpenMeteoClient
 
@@ -38,3 +39,6 @@ async def get_cache() -> AsyncGenerator[WeatherCache, None]:
 
 async def get_weather_service() -> OpenMeteoClient:
     return get_weather_client()
+
+async def get_mongo_storage() -> MongoWeatherStorage:
+    return get_mongo_storage_instance()

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field, confloat
 from typing import Literal, Optional, Dict, Any
 
@@ -113,3 +115,20 @@ class CacheClearResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: Dict[str, str]
+
+class HistoricalWeatherRecord(BaseModel):
+    city_key: str = Field(..., description="City identifier (e.g., 'london,gb')")
+    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    temperature_min: float
+    temperature_max: float
+    temperature_afternoon: float
+    temperature_night: float
+    temperature_evening: float
+    temperature_morning: float
+    precipitation_total: float
+    wind_speed: float
+    wind_direction: int
+    cloud_cover: int
+    humidity: int
+    pressure: int
+    last_updated: datetime = Field(default_factory=datetime.utcnow)

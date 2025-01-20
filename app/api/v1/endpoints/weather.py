@@ -2,10 +2,11 @@ from fastapi import APIRouter, Query, Path, HTTPException, Header, Depends
 from datetime import datetime, timedelta
 from typing import Literal
 from app.core.cities_data import CITIES
+from app.services.mongo_storage import MongoWeatherStorage
 from app.services.openmeteo_client import OpenMeteoClient
 from app.services.weather_cache import WeatherCache
 from app.models import WeatherMeta
-from app.api.dependencies import verify_api_key, get_cache, get_weather_service
+from app.api.dependencies import verify_api_key, get_cache, get_weather_service, get_mongo_storage
 
 router = APIRouter()
 
@@ -75,6 +76,7 @@ async def get_historical_weather(
         date: str = Query(..., regex="^\d{4}-\d{2}-\d{2}$"),
         units: Literal["standard", "metric", "imperial"] = Query("metric"),
         weather_cache: WeatherCache = Depends(get_cache),
+        mongo_storage: MongoWeatherStorage = Depends(get_mongo_storage),
         weather_client: OpenMeteoClient = Depends(get_weather_service),
         x_api_key: str = Depends(verify_api_key)
 ):
@@ -85,7 +87,7 @@ async def get_historical_weather(
     # Validate date range
     try:
         requested_date = datetime.strptime(date, "%Y-%m-%d")
-        min_date = datetime.strptime("2022-01-01", "%Y-%m-%d")  # OpenMeteo historical limit
+        min_date = datetime.strptime("2022-01-01", "%Y-%m-%d")
         max_date = datetime.now() - timedelta(days=1)
 
         if not (min_date <= requested_date <= max_date):
@@ -112,7 +114,23 @@ async def get_historical_weather(
     if cached_data:
         return cached_data
 
-    # If not in cache, fetch from OpenMeteo
+    # If not in cache, try MongoDB for tracked cities
+    if await mongo_storage.is_tracked_city(city_key):
+        mongo_data = await mongo_storage.get_weather(city_key, date)
+        if mongo_data:
+            # Add metadata
+            mongo_data.meta = WeatherMeta(
+                cached=False,
+                cache_time=None,
+                provider="OpenMeteo",
+                data_type="historical"
+            )
+
+            # Store in cache
+            await weather_cache.set(city_key, date, "historical", mongo_data)
+            return mongo_data
+
+    # If not in MongoDB or not a tracked city, fetch from OpenMeteo
     weather_data = await weather_client.get_historical_weather(
         lat=city_data["lat"],
         lon=city_data["lon"],
@@ -130,6 +148,10 @@ async def get_historical_weather(
 
     # Store in cache
     await weather_cache.set(city_key, date, "historical", weather_data)
+
+    # Store in MongoDB if it's a tracked city
+    if await mongo_storage.is_tracked_city(city_key):
+        await mongo_storage.store_weather(weather_data, city_key)
 
     return weather_data
 

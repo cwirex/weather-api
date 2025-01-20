@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     REDIS_PASSWORD: Optional[str] = None
 
+    # MongoDB Settings
+    MONGO_URL: str = "mongodb://localhost:27017"
+    MONGO_DB: str = "weather_history"
+    MONGO_COLLECTION: str = "historical_weather"
+
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
 
