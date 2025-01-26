@@ -26,7 +26,6 @@ To get started, browse the available endpoints below and make sure to include yo
 * 📈 **Weather Statistics**: Calculate weather stats for any date range
 * 🚀 **Fast Response**: Redis caching for optimal performance
 * 🌍 **Multiple Units**: Support for metric, imperial, and standard units
-* 🔄 **Auto-Update**: Regular updates of historical data for tracked cities
 
 ### Data Sources
 
