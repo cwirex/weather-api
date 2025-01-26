@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.models import WeatherResponse, HistoricalWeatherRecord, MongoDBStats
 
@@ -87,6 +87,49 @@ class MongoWeatherStorage:
             {"$set": record.model_dump()},
             upsert=True
         )
+
+    async def clear_city_data(self, city_key: str) -> Dict[str, Any]:
+        """Clear all historical weather data for a specific city
+
+        Args:
+            city_key: City identifier (e.g., 'london,gb')
+
+        Returns:
+            Dict containing operation details
+        """
+        try:
+            # Get count of documents before deletion
+            count_before = await self.collection.count_documents({"city_key": city_key})
+
+            if count_before == 0:
+                return {
+                    "status": "no_data",
+                    "message": f"No historical data found for city: {city_key}",
+                    "details": {
+                        "records_removed": 0
+                    }
+                }
+
+            # Delete all documents for the city
+            result = await self.collection.delete_many({"city_key": city_key})
+
+            return {
+                "status": "success",
+                "message": f"Historical data cleared for city: {city_key}",
+                "details": {
+                    "records_removed": result.deleted_count
+                }
+            }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error clearing historical data for city: {city_key}",
+                "details": {
+                    "error": str(e),
+                    "records_removed": 0
+                }
+            }
 
     async def get_stats(self) -> MongoDBStats:
         """Get MongoDB storage statistics"""
