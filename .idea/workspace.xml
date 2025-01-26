@@ -5,11 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="02ea3201-10ff-4023-ba0f-563b65c92720" name="Changes" comment="API health check OK">
+      <change afterPath="$PROJECT_DIR$/.dockerignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/v1/endpoints/cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/v1/endpoints/cache.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/v1/endpoints/weather.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/v1/endpoints/weather.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/mongo_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/mongo_storage.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,24 +37,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.main.executor": "Run",
-    "Python.populate_historical_data.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.populate_historical_data.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\mateusz\Desktop\noSQL\PycharmProjects\weather-api\app\services" />
       <recent name="C:\Users\mateusz\Desktop\noSQL\PycharmProjects\weather-api" />
+      <recent name="C:\Users\mateusz\Desktop\noSQL\PycharmProjects\weather-api\app\services" />
       <recent name="C:\Users\mateusz\Desktop\noSQL\PycharmProjects\weather-api\app" />
       <recent name="C:\Users\mateusz\Desktop\noSQL\PycharmProjects\weather-api\app\api\v1" />
     </key>
@@ -130,7 +130,8 @@
       <updated>1737291930145</updated>
       <workItem from="1737291931758" duration="5052000" />
       <workItem from="1737308706953" duration="10813000" />
-      <workItem from="1737400285005" duration="7807000" />
+      <workItem from="1737400285005" duration="7969000" />
+      <workItem from="1737921400398" duration="1915000" />
     </task>
     <task id="LOCAL-00001" summary="Init">
       <option name="closed" value="true" />

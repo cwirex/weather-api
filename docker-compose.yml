@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - MONGO_URL=mongodb://admin:password@mongodb:27017
+      - MONGO_DB=weather_history
+      - MONGO_COLLECTION=historical_weather
+      - OPENMETEO_FORECAST_URL=https://api.open-meteo.com/v1/forecast
+      - OPENMETEO_HISTORICAL_URL=https://historical-forecast-api.open-meteo.com/v1/forecast
+    depends_on:
+      - redis
+      - mongodb
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+
+  mongodb:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  redis_data:
+  mongodb_data:
