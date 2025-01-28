@@ -6,11 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="02ea3201-10ff-4023-ba0f-563b65c92720" name="Changes" comment="API health check OK">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/v1/endpoints/cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/v1/endpoints/cache.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/v1/endpoints/weather.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/v1/endpoints/weather.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/openmeteo_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/openmeteo_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/services/weather_cache.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/weather_cache.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/services/mongo_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/mongo_storage.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -145,7 +141,7 @@
       <workItem from="1737308706953" duration="10813000" />
       <workItem from="1737400285005" duration="7969000" />
       <workItem from="1737921400398" duration="7471000" />
-      <workItem from="1738056203683" duration="2683000" />
+      <workItem from="1738056203683" duration="3035000" />
     </task>
     <task id="LOCAL-00001" summary="Init">
       <option name="closed" value="true" />

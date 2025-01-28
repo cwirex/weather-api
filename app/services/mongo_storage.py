@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorClient
+from app.core.cities_data import CITIES
 from app.models import WeatherResponse, HistoricalWeatherRecord, MongoDBStats
 
 
@@ -14,7 +15,7 @@ class MongoWeatherStorage:
         self.client = AsyncIOMotorClient(mongo_url)
         self.db = self.client[database]
         self.collection = self.db[collection]
-        self.tracked_cities = {"london,gb", "paris,fr", "lublin,pl"}  # Cities to track
+        self.tracked_cities = set(CITIES.keys())  # Cities to track
 
     async def setup(self):
         """Setup indexes for better query performance"""
