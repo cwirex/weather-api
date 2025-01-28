@@ -2,6 +2,12 @@
 
 A FastAPI-based weather API that provides current, historical, and forecast weather data with caching and historical data storage.
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b190b8ea-5270-4403-9322-abecae89e568" alt="API Documentation" width="600"/>
+  <br>
+  <em>Interactive Swagger UI documentation showing all available endpoints</em>
+</p>
+
 ## Features
 
 - Current weather conditions for any supported city
@@ -11,6 +17,25 @@ A FastAPI-based weather API that provides current, historical, and forecast weat
 - Redis caching for optimal performance
 - Support for metric, imperial, and standard units
 - Admin endpoints for data population and cache management
+
+### Examples
+<details>
+<summary>API Call Example: /weather/stats</summary>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/581caf8e-0875-4a4f-954c-732c9f10d305" alt="API Call Example" width="800"/>
+  <br>
+  <em>Example of a successful API call returning weather data</em>
+</p>
+</details>
+
+<details>
+<summary>API Call Example: /cities/search</summary>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b92fac9e-1335-4497-bc6f-81deb5ca8848" alt="API Call Example" width="800"/>
+  <br>
+  <em>Example of a successful API call returning list of cities</em>
+</p>
+</details>
 
 ## Quick Start
 
@@ -62,6 +87,12 @@ volumes:
 ```bash
 docker-compose up
 ```
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/c426fdca-2f1f-4895-98bf-8ca0100f72c6" alt="Docker Compose Stack" width="600"/>
+  <br>
+  <em>Weather API stack: FastAPI service, Redis cache, and MongoDB database running in Docker containers</em>
+</p>
 
 The API will be available at http://localhost:8000 and will redirect you to the API documentation.
 
