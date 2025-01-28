@@ -16,7 +16,6 @@ from app.models import (
     TemperatureStats,
     PrecipitationStats,
     WindStats,
-    HumidityStats
 )
 
 class OpenMeteoClient:
@@ -49,7 +48,7 @@ class OpenMeteoClient:
             lon: float,
             units: Literal["standard", "metric", "imperial"] = "metric"
     ) -> WeatherResponse:
-        """Get current weather data with 3 days history and 7 days forecast"""
+        """Get current weather data (and 7 days forecast)"""
         params = {
             "latitude": lat,
             "longitude": lon,
@@ -70,7 +69,6 @@ class OpenMeteoClient:
                 "wind_direction_10m_dominant"
             ],
             "timezone": "auto",
-            "past_days": 3
         }
 
         data = await self._make_request(self.forecast_url, params)
@@ -223,7 +221,7 @@ class OpenMeteoClient:
 
         data = await self._make_request(self.forecast_url, params)
         daily = data["daily"]
-        day_index = days_ahead + 3  # Adjust for past_days=3
+        day_index = days_ahead
 
         # Convert values based on requested units
         temp_min = self._convert_temperature(daily["temperature_2m_min"][day_index], units)
@@ -328,11 +326,6 @@ class OpenMeteoClient:
                 average_speed=avg_wind,
                 max_speed=max_wind
             ),
-            humidity=HumidityStats(
-                average=70,  # Default values as historical data doesn't include humidity
-                min=60,
-                max=80
-            )
         )
 
     async def close(self):

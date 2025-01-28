@@ -192,6 +192,18 @@ class WeatherCache:
                 return None
         return None
 
+    async def convert_units(
+            self,
+            data: Union[WeatherResponse, WeatherStats],
+            to_units: str
+    ) -> Union[WeatherResponse, WeatherStats]:
+        """
+        Convert weather data to requested units.
+        For data from MongoDB, assumes input is always in standard units.
+        """
+        from_units = getattr(data, 'units', 'standard')  # Default to standard if units not specified
+        return self._convert_units(data, from_units, to_units)
+
     async def set(
             self,
             city: str,
@@ -207,9 +219,10 @@ class WeatherCache:
         # Create a copy for caching
         cache_data = data.model_copy(deep=True)
 
-        # Convert copy to standard units before caching
-        if cache_data.units != "standard":
-            cache_data = self._convert_units(cache_data, cache_data.units, "standard")
+        # Convert copy to standard units before caching if it's a WeatherResponse
+        if isinstance(cache_data, WeatherResponse):
+            if cache_data.units != "standard":
+                cache_data = self._convert_units(cache_data, cache_data.units, "standard")
 
         # Remove meta information before caching
         data_dict = cache_data.model_dump()

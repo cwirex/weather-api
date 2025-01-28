@@ -125,9 +125,9 @@ async def get_historical_weather(
                 provider="OpenMeteo [MongoDB Storage]",
                 data_type="historical"
             )
-            # Convert units if necessary
-            if mongo_data.units != units:
-                mongo_data = weather_cache._convert_units(mongo_data, mongo_data.units, units)
+            # Convert from standard units to requested units
+            if units != "standard":
+                mongo_data = await weather_cache.convert_units(mongo_data, units)
 
             # Store in cache
             await weather_cache.set(city_key, date, "historical", mongo_data)

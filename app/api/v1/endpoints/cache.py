@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, Path, Query, Depends
 from app.api.dependencies import verify_admin_access, get_cache, get_mongo_storage, get_weather_service
+from app.models import CacheStats, MongoDBStats
 from app.services.mongo_storage import MongoWeatherStorage
 from app.services.weather_cache import WeatherCache
 from app.services.population_service import PopulationService
@@ -15,14 +16,50 @@ async def get_cache_stats(
         admin_key: str = Depends(verify_admin_access)
 ):
     """Get combined cache and MongoDB storage statistics (admin only)"""
-    cache_stats = await weather_cache.get_stats()
-    mongo_stats = await mongo_storage.get_stats()
-
-    return {
-        "cache": cache_stats,
-        "mongodb": mongo_stats
+    response = {
+        "cache": None,
+        "mongodb": None
     }
 
+    # Get Redis cache stats
+    try:
+        response["cache"] = await weather_cache.get_stats()
+    except Exception as e:
+        response["cache"] = CacheStats(
+            status="error",
+            total_keys=0,
+            memory_usage="0 MB",
+            hit_rate="0%",
+            miss_rate="0%",
+            evicted_keys=0,
+            expired_keys=0,
+            uptime="0d 0h 0m",
+            connected_clients=0,
+            last_save=datetime.utcnow().isoformat() + "Z",
+            cache_type_distribution={
+                "current_weather": 0,
+                "historical": 0,
+                "forecast": 0,
+                "stats": 0
+            }
+        )
+
+    # Get MongoDB stats
+    try:
+        response["mongodb"] = await mongo_storage.get_stats()
+    except Exception as e:
+        response["mongodb"] = MongoDBStats(
+            status="error",
+            total_records=0,
+            earliest_record=None,
+            latest_record=None,
+            storage_size="0 MB",
+            records_by_city={},
+            cities_tracked=list(mongo_storage.tracked_cities),
+            date_coverage={}
+        )
+
+    return response
 
 @router.delete("/{city}")
 async def clear_city_data(

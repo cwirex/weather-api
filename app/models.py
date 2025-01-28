@@ -78,17 +78,10 @@ class WindStats(BaseModel):
     max_speed: float = Field(..., description="Maximum wind speed in the period")
 
 
-class HumidityStats(BaseModel):
-    average: float = Field(..., description="Average humidity in the period")
-    min: int = Field(..., description="Minimum humidity in the period", ge=0, le=100)
-    max: int = Field(..., description="Maximum humidity in the period", ge=0, le=100)
-
-
 class WeatherStats(BaseModel):
     temperature: TemperatureStats
     precipitation: PrecipitationStats
     wind: WindStats
-    humidity: HumidityStats
     meta: Optional[WeatherMeta] = Field(None, description="Metadata about the response")
 
 
@@ -136,8 +129,8 @@ class HistoricalWeatherRecord(BaseModel):
 class MongoDBStats(BaseModel):
     status: str = Field(..., description="Current status of the MongoDB storage")
     total_records: int = Field(..., description="Total number of weather records")
-    earliest_record: str = Field(..., description="Date of the earliest record")
-    latest_record: str = Field(..., description="Date of the latest record")
+    earliest_record: Optional[str] = Field(None, description="Date of the earliest record")
+    latest_record: Optional[str] = Field(None, description="Date of the latest record")
     storage_size: str = Field(..., description="Size of the MongoDB collection")
     records_by_city: Dict[str, int] = Field(..., description="Number of records per city")
     cities_tracked: List[str] = Field(..., description="List of cities being tracked")
